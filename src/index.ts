@@ -1,2 +1,2 @@
 
-export * from './push-channel'
+export { pushableChannel } from './push-channel'

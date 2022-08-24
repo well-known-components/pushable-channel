@@ -1,9 +1,14 @@
 type Node<T> = { value: T; prev?: Node<T>; next?: Node<T> }
 type LastResolver = (err?: any) => void
 
-function linkedList<T>() {
+export function linkedList<T>() {
   let head: Node<T> | undefined = undefined
   let tail: Node<T> | undefined = undefined
+  let _size = 0
+
+  function size() {
+    return _size
+  }
 
   function enqueue(value: T) {
     const node: Node<T> = {
@@ -17,6 +22,7 @@ function linkedList<T>() {
       head = node
     }
     tail = node
+    _size += 1
   }
 
   function remove(node: Node<T>): void {
@@ -32,6 +38,7 @@ function linkedList<T>() {
       const prevNode = node.prev
       prevNode.next = node.next
     }
+    _size -= 1
   }
 
   // removes the head node and updates the head
@@ -49,7 +56,7 @@ function linkedList<T>() {
     return !head
   }
 
-  return { enqueue, dequeue, isEmpty }
+    return { enqueue, dequeue, isEmpty, size }
 }
 
 /**
