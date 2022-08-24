@@ -142,6 +142,8 @@ describe("push channel", () => {
       push(4)
     ])
 
+    expect(chan.bufferSize()).toEqual(5)
+
     const takeAll = takeAsync(chan.iterable)
     await jobs
 

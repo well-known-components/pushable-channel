@@ -80,7 +80,7 @@ export function pushableChannel<T>(onIteratorClose: () => void) {
   }
 
   function bufferSize() {
-    return queue.size
+    return queue.size()
   }
     
   function releaseLockIfNeeded() {
