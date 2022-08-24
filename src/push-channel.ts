@@ -56,7 +56,7 @@ export function linkedList<T>() {
     return !head
   }
 
-    return { enqueue, dequeue, isEmpty, size }
+  return { enqueue, dequeue, isEmpty, size }
 }
 
 /**
@@ -79,6 +79,10 @@ export function pushableChannel<T>(onIteratorClose: () => void) {
     }
   }
 
+  function bufferSize() {
+    return queue.size
+  }
+    
   function releaseLockIfNeeded() {
     // signal that we have a value
     if (returnLock) {
@@ -171,5 +175,5 @@ export function pushableChannel<T>(onIteratorClose: () => void) {
     return closed
   }
 
-  return { iterable, push, close, failAndClose, isClosed, [Symbol.asyncIterator]: () => iterable }
+  return { iterable, bufferSize, push, close, failAndClose, isClosed, [Symbol.asyncIterator]: () => iterable }
 }

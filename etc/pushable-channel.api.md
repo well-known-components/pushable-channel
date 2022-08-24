@@ -7,6 +7,7 @@
 // @public
 export function pushableChannel<T>(onIteratorClose: () => void): {
     iterable: AsyncGenerator<T, any, unknown>;
+    bufferSize: () => () => number;
     push: (value: T, resolve: (err?: any) => void) => void;
     close: () => void;
     failAndClose: (errorToThrow: Error) => void;
