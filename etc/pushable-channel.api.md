@@ -5,7 +5,14 @@
 ```ts
 
 // @public
-export function example(): boolean;
+export function pushableChannel<T>(onIteratorClose: () => void): {
+    iterable: AsyncGenerator<T, any, unknown>;
+    push: (value: T, resolve: (err?: any) => void) => void;
+    close: () => void;
+    failAndClose: (errorToThrow: Error) => void;
+    isClosed: () => boolean;
+    [Symbol.asyncIterator]: () => AsyncGenerator<T, any, unknown>;
+};
 
 // (No @packageDocumentation comment for this package)
 
