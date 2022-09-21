@@ -1,6 +1,10 @@
 type Node<T> = { value: T; prev?: Node<T>; next?: Node<T> }
 type LastResolver = (err?: any) => void
 
+/**
+ * Creates a linkedList of <T> elements
+ * @public
+ */
 export function linkedList<T>() {
   let head: Node<T> | undefined = undefined
   let tail: Node<T> | undefined = undefined
@@ -65,7 +69,7 @@ export function linkedList<T>() {
  */
 export function pushableChannel<T>(onIteratorClose: () => void) {
   let returnLock: (() => void) | null = null
-  const queue = linkedList<{ value: T, resolve: LastResolver }>()
+  const queue = linkedList<{ value: T; resolve: LastResolver }>()
   let closed = false
   let error: Error | null = null
 
@@ -82,7 +86,7 @@ export function pushableChannel<T>(onIteratorClose: () => void) {
   function bufferSize() {
     return queue.size()
   }
-    
+
   function releaseLockIfNeeded() {
     // signal that we have a value
     if (returnLock) {
@@ -121,8 +125,7 @@ export function pushableChannel<T>(onIteratorClose: () => void) {
     }
     if (!queue.isEmpty()) {
       const node = queue.dequeue()!
-      if (node.resolve)
-        node.resolve(error || undefined)
+      if (node.resolve) node.resolve(error || undefined)
       return {
         done: false,
         value: node.value,
@@ -176,4 +179,94 @@ export function pushableChannel<T>(onIteratorClose: () => void) {
   }
 
   return { iterable, bufferSize, push, close, failAndClose, isClosed, [Symbol.asyncIterator]: () => iterable }
+}
+
+/**
+ * Creates a queue of <T> elements
+ * @public
+ */
+export class AsyncQueue<T> implements AsyncGenerator<T> {
+  // enqueues > dequeues
+  values = linkedList<IteratorResult<T>>()
+  // dequeues > enqueues
+  settlers = linkedList<{
+    resolve(x: IteratorResult<T>): void
+    reject(error: Error): void
+  }>()
+  closed = false
+  error: Error | undefined = undefined
+
+  constructor(private requestingNext: (queue: AsyncQueue<T>, action: "next" | "close") => void) {}
+
+  [Symbol.asyncIterator](): AsyncGenerator<T> {
+    return this
+  }
+
+  enqueue(value: T) {
+    if (this.closed) {
+      throw new Error("Channel is closed")
+    }
+    if (!this.settlers.isEmpty()) {
+      if (!this.values.isEmpty()) {
+        throw new Error("Illegal internal state")
+      }
+      const settler = this.settlers.dequeue()!
+      if (value instanceof Error) {
+        settler.reject(value)
+      } else {
+        settler.resolve({ value })
+      }
+    } else {
+      this.values.enqueue({ value })
+    }
+  }
+  /**
+   * @returns a Promise for an IteratorResult
+   */
+  async next(): Promise<IteratorResult<T>> {
+    if (!this.values.isEmpty()) {
+      const value = this.values.dequeue()!
+      return value
+    }
+    if (this.error) {
+      throw this.error
+    }
+    if (this.closed) {
+      if (!this.settlers.isEmpty()) {
+        throw new Error("Illegal internal state")
+      }
+      return { done: true, value: undefined }
+    }
+    // Wait for new values to be enqueued
+    return new Promise<IteratorResult<T>>((resolve, reject) => {
+      this.requestingNext(this, "next")
+      this.settlers.enqueue({ resolve, reject })
+    })
+  }
+
+  async return(value: any): Promise<IteratorResult<T>> {
+    this.close(value)
+    return { done: true, value }
+  }
+
+  async throw(error: Error): Promise<IteratorResult<T>> {
+    this.close(error)
+    return { done: true, value: undefined }
+  }
+
+  close(error?: Error) {
+    if (error)
+      while (!this.settlers.isEmpty()) {
+        this.settlers.dequeue()!.reject(error)
+      }
+    else
+      while (!this.settlers.isEmpty()) {
+        this.settlers.dequeue()!.resolve({ done: true, value: undefined })
+      }
+    if (error) this.error = error
+    if (!this.closed) {
+      this.closed = true
+      this.requestingNext(this, "close")
+    }
+  }
 }
