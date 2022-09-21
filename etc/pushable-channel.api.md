@@ -5,6 +5,14 @@
 ```ts
 
 // @public
+export function linkedList<T>(): {
+    enqueue: (value: T) => void;
+    dequeue: () => T | undefined;
+    isEmpty: () => boolean;
+    size: () => number;
+};
+
+// @public
 export function pushableChannel<T>(onIteratorClose: () => void): {
     iterable: AsyncGenerator<T, any, unknown>;
     bufferSize: () => number;
