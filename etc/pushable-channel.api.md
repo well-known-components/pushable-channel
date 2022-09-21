@@ -5,6 +5,47 @@
 ```ts
 
 // @public
+export class AsyncQueue<T> implements AsyncGenerator<T> {
+    // (undocumented)
+    [Symbol.asyncIterator](): AsyncGenerator<T>;
+    constructor(requestingNext: (queue: AsyncQueue<T>, action: "next" | "close") => void);
+    // (undocumented)
+    close(error?: Error): void;
+    // (undocumented)
+    closed: boolean;
+    // (undocumented)
+    enqueue(value: T): void;
+    // (undocumented)
+    error: Error | undefined;
+    // (undocumented)
+    next(): Promise<IteratorResult<T>>;
+    // (undocumented)
+    return(value: any): Promise<IteratorResult<T>>;
+    // (undocumented)
+    settlers: {
+        enqueue: (value: {
+            resolve(x: IteratorResult<T>): void;
+            reject(error: Error): void;
+        }) => void;
+        dequeue: () => {
+            resolve(x: IteratorResult<T>): void;
+            reject(error: Error): void;
+        } | undefined;
+        isEmpty: () => boolean;
+        size: () => number;
+    };
+    // (undocumented)
+    throw(error: Error): Promise<IteratorResult<T>>;
+    // (undocumented)
+    values: {
+        enqueue: (value: IteratorResult<T, any>) => void;
+        dequeue: () => IteratorResult<T, any> | undefined;
+        isEmpty: () => boolean;
+        size: () => number;
+    };
+}
+
+// @public
 export function linkedList<T>(): {
     enqueue: (value: T) => void;
     dequeue: () => T | undefined;
